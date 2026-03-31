@@ -5,36 +5,41 @@ from django.http import HttpResponse
 from django.conf import settings
 from .models import Certificate
 from PIL import Image, ImageDraw, ImageFont
+from django.contrib.staticfiles import finders  # Muhimu kwa Render
 
-# 1. View ya kuonesha orodha ya vyeti
 def certificate_list(request):
     certs = Certificate.objects.all()
     return render(request, 'certificates/list.html', {'certs': certs})
 
-# 2. View ya kutengeneza picha ya cheti
 def generate_certificate(request, cert_id):
     cert = get_object_or_404(Certificate, certificate_id=cert_id)
     
-    # MBINU MPYA: Badala ya finders, tunatumia BASE_DIR moja kwa moja
-    # Hii inahakikisha Render haipotei njia
-    template_path = os.path.join(settings.BASE_DIR, 'certificates', 'static', 'certificates', 'images', 'template.png')
-    font_path = os.path.join(settings.BASE_DIR, 'certificates', 'static', 'certificates', 'fonts', 'arial.ttf')
+    # MBINU YA RENDER: finders.find inatafuta popote static ilipo (hata staticfiles)
+    template_path = finders.find('certificates/images/template.png')
+    font_path = finders.find('certificates/fonts/arial.ttf')
 
-    # Debug: Kama bado inakataa, itakuambia njia kamili inayotafuta
-    if not os.path.exists(template_path) or not os.path.exists(font_path):
-        return HttpResponse(
-            f"Error: Mafaili hayajapatikana!<br>Inatafuta hapa: {template_path}", 
-            status=404
-        )
+    # Kama finders imefeli, tunajaribu kutafuta kwa mkono kwenye STATIC_ROOT
+    if not template_path:
+        template_path = os.path.join(settings.STATIC_ROOT, 'certificates', 'images', 'template.png')
+    if not font_path:
+        font_path = os.path.join(settings.STATIC_ROOT, 'certificates', 'fonts', 'arial.ttf')
+
+    # Kama bado haionekani kabisa
+    if not template_path or not os.path.exists(template_path):
+        return HttpResponse(f"Error: Template haijapatikana hata kidogo!", status=404)
 
     try:
         img = Image.open(template_path)
         draw = ImageDraw.Draw(img)
         W, H = img.size 
 
-        font = ImageFont.truetype(font_path, 60)
+        # Muhimu: Kama arial.ttf haipo, Pillow itatumia font ya mfumo isiyopendeza sana
+        try:
+            font = ImageFont.truetype(font_path, 60)
+        except:
+            font = ImageFont.load_default()
 
-        # Kuweka Jina Katikati
+        # Jina la Mpokeaji
         name_text = str(cert.recipient_name).upper()
         name_bbox = draw.textbbox((0, 0), name_text, font=font)
         name_w = name_bbox[2] - name_bbox[0]
