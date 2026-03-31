@@ -1,60 +1,39 @@
-import os
-import io
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
-from django.conf import settings
+from django.http import FileResponse, HttpResponse, Http404
 from .models import Certificate
-from PIL import Image, ImageDraw, ImageFont
-from django.contrib.staticfiles import finders  # Muhimu kwa Render
+import mimetypes
 
+# 1. View ya kuonesha orodha ya vyeti (Haitabadilika sana)
 def certificate_list(request):
     certs = Certificate.objects.all()
     return render(request, 'certificates/list.html', {'certs': certs})
 
+# 2. View ya mwanafunzi kudownload faili aliloweka Admin
 def generate_certificate(request, cert_id):
+    # Pata cheti husika kwa ID
     cert = get_object_or_404(Certificate, certificate_id=cert_id)
     
-    # MBINU YA RENDER: finders.find inatafuta popote static ilipo (hata staticfiles)
-    template_path = finders.find('certificates/images/template.png')
-    font_path = finders.find('certificates/fonts/arial.ttf')
-
-    # Kama finders imefeli, tunajaribu kutafuta kwa mkono kwenye STATIC_ROOT
-    if not template_path:
-        template_path = os.path.join(settings.STATIC_ROOT, 'certificates', 'images', 'template.png')
-    if not font_path:
-        font_path = os.path.join(settings.STATIC_ROOT, 'certificates', 'fonts', 'arial.ttf')
-
-    # Kama bado haionekani kabisa
-    if not template_path or not os.path.exists(template_path):
-        return HttpResponse(f"Error: Template haijapatikana hata kidogo!", status=404)
+    # Angalia kama Admin ameshapakia faili
+    if not cert.certificate_file:
+        return HttpResponse(
+            "<h2>Samahani!</h2><p>Cheti chako bado hakijawekwa kwenye mfumo. Tafadhali wasiliana na Admin.</p>", 
+            status=404
+        )
 
     try:
-        img = Image.open(template_path)
-        draw = ImageDraw.Draw(img)
-        W, H = img.size 
-
-        # Muhimu: Kama arial.ttf haipo, Pillow itatumia font ya mfumo isiyopendeza sana
-        try:
-            font = ImageFont.truetype(font_path, 60)
-        except:
-            font = ImageFont.load_default()
-
-        # Jina la Mpokeaji
-        name_text = str(cert.recipient_name).upper()
-        name_bbox = draw.textbbox((0, 0), name_text, font=font)
-        name_w = name_bbox[2] - name_bbox[0]
-        draw.text(((W - name_w) / 2, 400), name_text, fill="black", font=font)
-
-        # Jina la Kozi
-        course_text = f"Successfully completed {cert.course_name}"
-        course_bbox = draw.textbbox((0, 0), course_text, font=font)
-        course_w = course_bbox[2] - course_bbox[0]
-        draw.text(((W - course_w) / 2, 550), course_text, fill="blue", font=font)
-
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
+        # Fungua faili kutoka kwenye Media Storage
+        file_handle = cert.certificate_file.open('rb')
         
-        return HttpResponse(buffer.getvalue(), content_type="image/png")
+        # Tambua aina ya faili (PDF, PNG, au JPG) ili browser ijue jinsi ya ku-handle
+        content_type, _ = mimetypes.guess_type(cert.certificate_file.name)
         
+        # Mpe mwanafunzi faili lake
+        response = FileResponse(file_handle, content_type=content_type)
+        
+        # Hii inamlazimisha browser i-download (attachment) badala ya kufungua tu
+        response['Content-Disposition'] = f'attachment; filename="Cheti_{cert.certificate_id}.pdf"'
+        
+        return response
+
     except Exception as e:
-        return HttpResponse(f"Kuna tatizo limetokea: {str(e)}", status=500)
+        return HttpResponse(f"Kuna tatizo la kiufundi: {str(e)}", status=500)
