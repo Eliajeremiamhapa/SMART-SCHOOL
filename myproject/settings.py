@@ -177,4 +177,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # kuingia gallery bila login
-LOGIN_URL = 'auth/login/'
+# LOGIN_URL = 'auth/login/'
+# added to fix gallerry not found
+
+LOGIN_URL = '/auth/login/'
