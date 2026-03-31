@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'login',
     'gallery',
     'certificates',
+    'dashboard',
    
 ]
 #added
@@ -182,3 +183,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # added to fix gallerry not found
 
 LOGIN_URL = '/auth/login/'
+
+# myproject/settings.py
+
+LOGIN_REDIRECT_URL = 'dashboard_index'
+LOGOUT_REDIRECT_URL = 'login'

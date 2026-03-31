@@ -12,6 +12,7 @@ urlpatterns = [
     path('auth/', include('login.urls')),
     path('gallery/', include('gallery.urls')),
     path('certificates/', include('certificates.urls')), # Ongeza hii!
+  path('dashboard/', include('dashboard.urls')),
 ]
 
 # Hii block hapa chini ndiyo inatatua tatizo la picha kutoonekana (Icon tu)
