@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <h2 class="text-3xl font-bold mb-4 text-blue-900">{{ album.title }}</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for photo in photos %}
+        <div class="rounded-lg shadow-md overflow-hidden">
+            <img src="{{ photo.image.url }}" class="w-full h-64 object-cover">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

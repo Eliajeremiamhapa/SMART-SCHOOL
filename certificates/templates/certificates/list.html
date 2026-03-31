@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orodha ya Vyeti</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .cert-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { background: #28a745; color: white; padding: 10px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Vyeti Vilivyotengenezwa</h2>
+    {% for cert in certs %}
+        <div class="cert-card">
+            <h3>{{ cert.recipient_name }}</h3>
+            <p>Kozi: {{ cert.course_name }}</p>
+            <a href="{% url 'generate_certificate' cert.certificate_id %}" class="btn" target="_blank">View Certificate</a>
+        </div>
+    {% empty %}
+        <p>Hakuna vyeti bado. Ongeza kwanza kwenye Admin Panel!</p>
+    {% endfor %}
+</body>
+</html>
